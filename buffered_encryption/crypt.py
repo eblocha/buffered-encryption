@@ -1,4 +1,5 @@
 import os
+import io
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from .utils import iter_chunks
 
@@ -25,9 +26,9 @@ class EncryptionIterator:
     tag : bytes
         The tag to verfiy data integrity on decryption
     """
-    def __init__(self,file,key,signature,chunk_size=64 * 1024):
+    def __init__(self,plaintext:io.BytesIO,key:bytes,signature:bytes,chunk_size:int=64 * 1024):
         self.iv = os.urandom(12)
-        self.file = file
+        self.file = plaintext
         self.chunk_size = chunk_size
         self.encryptor = Cipher(
             algorithms.AES(key),
@@ -51,23 +52,23 @@ class DecryptionIterator:
 
     Parameters
     ----------
-    file : io.BytesIO
-        The file buffer to encrypt
+    ciphertext : io.BytesIO
+        The file buffer to decrypt
     key : bytes
-        The secret key for AES encryption
+        The secret key for AES decryption
     signature : bytes
-        Additional data used to verify the key later
+        Additional data used to verify the key
     iv : bytes
         The initialization vector from the EncryptionIterator object
     tag : bytes
         The tag used for data integrity from the EncryptionIterator object
     chunk_size : int
-        How much data to encrypt per iteration
+        How much data to decrypt per iteration
     """
-    def __init__(self,file,key,signature,iv,tag,chunk_size=64 * 1024):
+    def __init__(self,ciphertext:io.BytesIO,key:bytes,signature:bytes,iv:bytes,tag:bytes,chunk_size:int=64 * 1024):
         self.iv = iv
         self.tag = tag
-        self.file = file
+        self.file = ciphertext
         self.chunk_size = chunk_size
         self.decryptor = Cipher(
             algorithms.AES(key),

@@ -44,7 +44,6 @@ ciphertext.close()
 Classes
 -------
 ```python
-
 class EncryptionIterator:
     """
     Encrypt a file iteratively
@@ -76,17 +75,17 @@ class DecryptionIterator:
 
     Parameters
     ----------
-    file : io.BytesIO
-        The file buffer to encrypt
+    ciphertext : io.BytesIO
+        The file buffer to decrypt
     key : bytes
-        The secret key for AES encryption
+        The secret key for AES decryption
     signature : bytes
-        Additional data used to verify the key later
+        Additional data used to verify the key
     iv : bytes
         The initialization vector from the EncryptionIterator object
     tag : bytes
         The tag used for data integrity from the EncryptionIterator object
     chunk_size : int
-        How much data to encrypt per iteration
+        How much data to decrypt per iteration
     """
 ```
