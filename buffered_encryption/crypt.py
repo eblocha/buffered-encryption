@@ -10,7 +10,7 @@ class EncryptionIterator:
 
     Parameters
     ----------
-    file : io.BytesIO
+    plaintext : io.BytesIO
         The file buffer to encrypt
     key : bytes
         The secret key for AES encryption
