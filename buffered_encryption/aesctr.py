@@ -56,6 +56,8 @@ class ReadOnlyEncryptedFile:
         This should be generated with os.urandom(16) when you encrypt the original data
     """
 
+    BLOCK_SIZE = 16
+
     def __init__(
         self, encrypted_buffer: io.BytesIO, key: bytes, nonce: bytes
     ):
@@ -73,11 +75,14 @@ class ReadOnlyEncryptedFile:
             for byte in bts:
                 yield byte
 
-    @staticmethod
-    def add_int_to_bytes(b, i):
+    @classmethod
+    def add_int_to_bytes(cls, b, i):
         """Add an integer to a byte string"""
-        # OpenSSL uses big-endian
-        return (int.from_bytes(b, byteorder="big") + i).to_bytes(16, "big")
+        # OpenSSL uses big-endian for CTR
+        MAX = int.from_bytes(b"\xff"*cls.BLOCK_SIZE,byteorder="big") + 1
+        # If the counter overflows, it wraps back to zero
+        i = (int.from_bytes(b, byteorder="big") + i) % MAX
+        return i.to_bytes(cls.BLOCK_SIZE, "big")
 
     @property
     def cipher(self):
@@ -96,15 +101,15 @@ class ReadOnlyEncryptedFile:
         # Ensure we are requesting multiples of 16 bytes, unless we are at the end of the stream
         if size == 0:
             return b""
-        elif (size > 0) and (size % 16 != 0):
-            full_size = size - (size % 16) + 16
+        elif (size > 0) and (size % self.BLOCK_SIZE != 0):
+            full_size = size - (size % self.BLOCK_SIZE) + self.BLOCK_SIZE
         else:
             # Whole file is requested, or multiple of 16
             full_size = size
 
         encrypted_data = self.buffer.read(full_size)
         decrypted_data = self.decryptor.update(encrypted_data)
-        self.counter += len(encrypted_data) // 16
+        self.counter += len(encrypted_data) // self.BLOCK_SIZE
         if size < 0:
             return decrypted_data[self.offset :]
         else:
@@ -115,10 +120,10 @@ class ReadOnlyEncryptedFile:
         pos = offset + whence
         # Move the cursor to the start of the block
         # Keep track of how far into the current block we are
-        self.offset = pos % 16
+        self.offset = pos % self.BLOCK_SIZE
         real_pos = pos - (self.offset)
         self.buffer.seek(real_pos)
-        self.counter = real_pos // 16
+        self.counter = real_pos // self.BLOCK_SIZE
         return pos
     
     def write(self, b:bytes):
