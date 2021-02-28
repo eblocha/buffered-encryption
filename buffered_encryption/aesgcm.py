@@ -1,3 +1,5 @@
+"""Encryption that uses AES in GCM mode"""
+
 import os
 import io
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
