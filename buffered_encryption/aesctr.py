@@ -77,7 +77,7 @@ class ReadOnlyEncryptedFile:
                 break
             yield bts
     
-    def __enter__(self) -> ReadOnlyEncryptedFile:
+    def __enter__(self):
         return self
 
     def __exit__(self, type, value, traceback) -> None:
