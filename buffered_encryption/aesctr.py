@@ -66,6 +66,9 @@ class ReadOnlyEncryptedFile:
         self.nonce = nonce
         self.counter = 0
         self.offset = 0
+
+        # Seek to the position the buffer has
+        self.seek(self.buffer.tell())
     
     def __iter__(self):
         while True:
