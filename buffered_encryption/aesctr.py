@@ -72,8 +72,7 @@ class ReadOnlyEncryptedFile:
             bts = self.read(16)
             if not bts:
                 break
-            for byte in bts:
-                yield byte
+            yield bts
 
     @classmethod
     def add_int_to_bytes(cls, b, i):
@@ -115,9 +114,12 @@ class ReadOnlyEncryptedFile:
         else:
             return decrypted_data[self.offset : self.offset + size]
 
-    def seek(self, offset: int, whence: int = 0) -> int:
+    def seek(self, offset: int, whence: int = os.SEEK_SET) -> int:
         """Seek to a position in the decrypted buffer"""
-        pos = offset + whence
+        if whence==os.SEEK_SET:
+            pos = offset
+        else:
+            raise NotImplementedError("Only absolute positioning allowed.")
         # Move the cursor to the start of the block
         # Keep track of how far into the current block we are
         self.offset = pos % self.BLOCK_SIZE
@@ -125,6 +127,11 @@ class ReadOnlyEncryptedFile:
         self.buffer.seek(real_pos)
         self.counter = real_pos // self.BLOCK_SIZE
         return pos
+    
+    def tell(self):
+        # The cursor position in the underlying encrypted buffer is always at the start of a block.
+        # Add on the offset into the block for arbitrary access
+        return self.buffer.tell() + self.offset
     
     def write(self, b:bytes):
         raise io.UnsupportedOperation("Encrypted buffer is read-only")
