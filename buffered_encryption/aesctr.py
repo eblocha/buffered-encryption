@@ -76,6 +76,12 @@ class ReadOnlyEncryptedFile:
             if not bts:
                 break
             yield bts
+    
+    def __enter__(self) -> ReadOnlyEncryptedFile:
+        return self
+
+    def __exit__(self, type, value, traceback) -> None:
+        self.close()
 
     @classmethod
     def add_int_to_bytes(cls, b, i):
@@ -97,6 +103,10 @@ class ReadOnlyEncryptedFile:
     @property
     def decryptor(self):
         return self.cipher.decryptor()
+    
+    @property
+    def closed(self):
+        return self.buffer.closed
 
     def read(self, size: int = -1) -> bytes:
         """Read and decrypt bytes from the buffer"""
@@ -121,8 +131,10 @@ class ReadOnlyEncryptedFile:
         """Seek to a position in the decrypted buffer"""
         if whence==os.SEEK_SET:
             pos = offset
+        elif whence==os.SEEK_CUR:
+            pos = offset + self.tell()
         else:
-            raise NotImplementedError("Only absolute positioning allowed.")
+            raise NotImplementedError(f"Whence of '{whence}' is not supported.")
         # Move the cursor to the start of the block
         # Keep track of how far into the current block we are
         self.offset = pos % self.BLOCK_SIZE
@@ -131,10 +143,25 @@ class ReadOnlyEncryptedFile:
         self.counter = real_pos // self.BLOCK_SIZE
         return pos
     
-    def tell(self):
+    def tell(self) -> int:
         # The cursor position in the underlying encrypted buffer is always at the start of a block.
         # Add on the offset into the block for arbitrary access
         return self.buffer.tell() + self.offset
     
     def write(self, b:bytes):
-        raise io.UnsupportedOperation("Encrypted buffer is read-only")
+        raise OSError("Encrypted file is read-only")
+
+    def close(self):
+        return self.buffer.close()
+
+    def writable(self) -> bool:
+        return False
+    
+    def truncate(self,size=None):
+        raise OSError("Encrypted file is read-only")
+    
+    def getvalue(self) -> bytes:
+        return self.read()
+    
+    def seekable(self) -> bool:
+        return True
