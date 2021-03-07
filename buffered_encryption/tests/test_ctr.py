@@ -42,3 +42,7 @@ class TestSymmetry(unittest.TestCase):
         with self.subTest():
             self.assertEqual(second,second_plain)
 
+    def test_tell(self):
+        """Ensure we tell the correct cursor position"""
+        self.decrypted_file.seek(538)
+        self.assertEqual(self.decrypted_file.tell(),538)
