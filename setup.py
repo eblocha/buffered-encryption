@@ -6,7 +6,7 @@ def read(fname):
 
 setup(
     name = "buffered_encryption",
-    version = "0.1.1",
+    version = "0.2.0",
     author = "Elliott Blocha",
     description = "Encrypt large files without loading the entire file into memory.",
     license = "MIT",
